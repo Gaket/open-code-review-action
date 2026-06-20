@@ -1,0 +1,23 @@
+.github/workflows/test.yml
+  s_d1e2b3922d81ce::t_d9d58017763fe2 1-14
+examples/pr-review.yml
+  s_d1e2b3922d81ce::t_98bef7e31b4afd 1-44
+.github/workflows/self-review.yml
+  s_d1e2b3922d81ce::t_d642dcf56e354d 1-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "7d674b511e47107cee468fdb9760850861397158",
+  "prompts": {},
+  "sessions": {
+    "s_d1e2b3922d81ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f211d83b-9507-41a7-a87d-aab40dfe22e8",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
