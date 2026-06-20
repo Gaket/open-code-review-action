@@ -1,0 +1,21 @@
+post-review.js
+  s_d1e2b3922d81ce::t_046d23c019dfbd 1-173
+test/post-review.test.js
+  s_d1e2b3922d81ce::t_2d893016288ebe 1-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "9bcd42232d15eee53d3247f533382082fa2398a3",
+  "prompts": {},
+  "sessions": {
+    "s_d1e2b3922d81ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f211d83b-9507-41a7-a87d-aab40dfe22e8",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
