@@ -37,8 +37,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: Gaket/open-code-review-action@v1
         with:
-          llm_url: ${{ secrets.OCR_LLM_URL }}      # https://litellm.<host>/v1/chat/completions
+          # url/model may be stored as secrets OR variables; the token must always be a secret (masked).
+          llm_url: ${{ secrets.OCR_LLM_URL || vars.OCR_LLM_URL }}      # full https://litellm.<host>/v1/chat/completions URL
           llm_token: ${{ secrets.OCR_LLM_TOKEN }}
-          llm_model: ${{ secrets.OCR_LLM_MODEL }}  # e.g. kimi-code
+          llm_model: ${{ secrets.OCR_LLM_MODEL || vars.OCR_LLM_MODEL }}  # e.g. kimi-code
           use_anthropic: 'false'
           github_token: ${{ secrets.GITHUB_TOKEN }}

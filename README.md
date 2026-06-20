@@ -45,9 +45,10 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: Gaket/open-code-review-action@v1
         with:
-          llm_url: ${{ secrets.OCR_LLM_URL }}
+          # url/model may be a secret OR a variable; the token must always be a secret.
+          llm_url: ${{ secrets.OCR_LLM_URL || vars.OCR_LLM_URL }}
           llm_token: ${{ secrets.OCR_LLM_TOKEN }}
-          llm_model: ${{ secrets.OCR_LLM_MODEL }}
+          llm_model: ${{ secrets.OCR_LLM_MODEL || vars.OCR_LLM_MODEL }}
           use_anthropic: 'false'
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -74,7 +75,7 @@ This is the part most people get wrong:
 - **`llm_url` must be the full chat-completions URL** — `https://<litellm-host>/v1/chat/completions` (not just the `/v1` base). If `ocr llm test` returns a 404, re-check the path/suffix.
 - **`use_anthropic` must be `false`.** OCR defaults it to `true`; for an OpenAI-compatible endpoint it must be set to `false` explicitly (the action does this) so OCR uses standard Bearer API-key auth.
 - **`llm_model`** is the LiteLLM **alias** as configured in your proxy (e.g. `kimi-code`).
-- Store the three values as repository **secrets**: `OCR_LLM_URL`, `OCR_LLM_TOKEN`, `OCR_LLM_MODEL`.
+- Store `OCR_LLM_TOKEN` as a **secret** (it's sensitive and must be masked). `OCR_LLM_URL` and `OCR_LLM_MODEL` may be stored as **secrets _or_ variables** — the workflow above reads `secrets.X || vars.X` for those, so either works (repo- or org-level). **Never store the token as a plaintext variable** — variables are not masked in logs.
 - Optional: set `language` (e.g. `English`) and a model-specific `extra_body` (e.g. `{"enable_thinking": false}` to disable thinking output on models that support it).
 
 Verify connectivity locally before wiring CI:
