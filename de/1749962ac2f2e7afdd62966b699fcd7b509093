@@ -1,0 +1,19 @@
+README.md
+  s_d1e2b3922d81ce::t_7b33edac412e63 1-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "de1749962ac2f2e7afdd62966b699fcd7b509093",
+  "prompts": {},
+  "sessions": {
+    "s_d1e2b3922d81ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f211d83b-9507-41a7-a87d-aab40dfe22e8",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
