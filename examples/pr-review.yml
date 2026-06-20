@@ -1,0 +1,44 @@
+# Copy into .github/workflows/ of any repo that wants OCR reviews.
+# SECURITY: pull_request_target gives fork PRs access to secrets. This job does
+# NOT build/test/run PR or workspace code. NOTE: OCR is an agent — it may read
+# the changed files and repository context and send them to the configured LLM
+# endpoint. Only point it at an endpoint you trust with repository contents, and
+# never add build/test steps to this job.
+name: Open Code Review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    # The issue_comment branch is gated by an author_association allowlist so
+    # arbitrary commenters can't trigger reviews (and spend LLM budget).
+    if: >
+      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+       startsWith(github.event.comment.body, '/review') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: Gaket/open-code-review-action@v1
+        with:
+          llm_url: ${{ secrets.OCR_LLM_URL }}      # https://litellm.<host>/v1/chat/completions
+          llm_token: ${{ secrets.OCR_LLM_TOKEN }}
+          llm_model: ${{ secrets.OCR_LLM_MODEL }}  # e.g. kimi-code
+          use_anthropic: 'false'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
