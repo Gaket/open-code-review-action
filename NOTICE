@@ -1,0 +1,7 @@
+open-code-review-action
+Copyright 2026 Gaket
+
+This product includes software developed at Alibaba
+(https://github.com/alibaba/open-code-review), licensed under the Apache
+License, Version 2.0. The PR-comment posting logic in post-review.js is
+adapted from that project's examples/github_actions/ocr-review.yml.
