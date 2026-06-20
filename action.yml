@@ -1,0 +1,113 @@
+name: 'Open Code Review (LiteLLM)'
+description: 'AI PR code review via Alibaba open-code-review CLI against an OpenAI-compatible LiteLLM endpoint'
+author: 'Gaket'
+branding:
+  icon: 'git-pull-request'
+  color: 'orange'
+
+inputs:
+  llm_url:
+    description: 'OpenAI-compatible chat-completions endpoint, e.g. https://litellm.example.com/v1/chat/completions'
+    required: true
+  llm_token:
+    description: 'API key / LiteLLM virtual key (Bearer auth)'
+    required: true
+  llm_model:
+    description: 'Model name / LiteLLM alias (e.g. kimi-code, gpt-4o)'
+    required: true
+  use_anthropic:
+    description: 'true only for an Anthropic-protocol endpoint. For OpenAI-compatible LiteLLM keep false.'
+    required: false
+    default: 'false'
+  extra_body:
+    description: 'Optional JSON merged into the request body, e.g. {"enable_thinking": false}'
+    required: false
+    default: ''
+  language:
+    description: 'Optional review language passed to `ocr config set language` (e.g. English). Empty = OCR default.'
+    required: false
+    default: ''
+  github_token:
+    description: 'Token with pull-requests: write to post review comments'
+    required: false
+    default: ${{ github.token }}
+  ocr_version:
+    description: 'npm version spec for @alibaba-group/open-code-review. Pinned by default for reproducibility + supply-chain safety (this job carries secrets + a write token).'
+    required: false
+    default: '1.3.19'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get PR context (comment triggers)
+      id: pr-context
+      if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github_token }}
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner, repo: context.repo.repo, pull_number: context.issue.number });
+          core.setOutput('base_ref', pr.base.ref);
+          core.setOutput('head_sha', pr.head.sha);
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install open-code-review
+      shell: bash
+      run: npm install -g "@alibaba-group/open-code-review@${{ inputs.ocr_version }}"
+
+    - name: Configure OCR for the LiteLLM endpoint
+      shell: bash
+      env:
+        IN_URL: ${{ inputs.llm_url }}
+        IN_TOKEN: ${{ inputs.llm_token }}
+        IN_MODEL: ${{ inputs.llm_model }}
+        IN_USE_ANTHROPIC: ${{ inputs.use_anthropic }}
+        IN_EXTRA_BODY: ${{ inputs.extra_body }}
+        IN_LANGUAGE: ${{ inputs.language }}
+      run: |
+        ocr config set llm.url "$IN_URL"
+        ocr config set llm.auth_token "$IN_TOKEN"
+        ocr config set llm.model "$IN_MODEL"
+        ocr config set llm.use_anthropic "$IN_USE_ANTHROPIC"
+        if [ -n "$IN_EXTRA_BODY" ]; then
+          ocr config set llm.extra_body "$IN_EXTRA_BODY"
+        fi
+        if [ -n "$IN_LANGUAGE" ]; then
+          ocr config set language "$IN_LANGUAGE"
+        fi
+
+    - name: Run open-code-review
+      shell: bash
+      env:
+        BASE_REF: ${{ github.event.pull_request.base.ref || steps.pr-context.outputs.base_ref }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha || steps.pr-context.outputs.head_sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+      run: |
+        set -uo pipefail
+        git config --global --add safe.directory '*'   # avoid git "dubious ownership" abort in container jobs
+        git fetch origin "pull/${PR_NUMBER}/head" || true
+        echo "Reviewing ${HEAD_SHA} against origin/${BASE_REF}"
+        ocr review --from "origin/${BASE_REF}" --to "${HEAD_SHA}" --format json \
+          > /tmp/ocr-result.json 2>/tmp/ocr-stderr.log || true
+        echo "----- ocr-result.json -----"; cat /tmp/ocr-result.json || true
+        echo "----- ocr-stderr.log -----";  cat /tmp/ocr-stderr.log || true
+
+    - name: Post review to PR
+      uses: actions/github-script@v7
+      env:
+        OCR_RESULT_PATH: /tmp/ocr-result.json
+        OCR_STDERR_PATH: /tmp/ocr-stderr.log
+        ACTION_PATH: ${{ github.action_path }}
+      with:
+        github-token: ${{ inputs.github_token }}
+        script: |
+          // NOTE: process.env.GITHUB_ACTION_PATH here points at github-script's OWN dir,
+          // not ours. Use github.action_path (composite context), passed via ACTION_PATH.
+          // See actions/github-script#322.
+          const postReview = require(`${process.env.ACTION_PATH}/post-review.js`);
+          await postReview({ github, context, core });
