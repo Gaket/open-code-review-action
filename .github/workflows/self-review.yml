@@ -1,7 +1,9 @@
 name: Self Review
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
-  cancel-in-progress: true
+  # Scope by event_name so comment events never share a group with — and cancel — an
+  # in-progress PR review. Only PR-event runs cancel-in-progress (newer push supersedes).
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'issue_comment' }}
 on:
   pull_request:
     types: [opened, synchronize, reopened]
