@@ -1,0 +1,27 @@
+test/post-review.test.js
+  s_ff851786d26835::t_eb408a7422849c 92-141
+post-review.js
+  s_ff851786d26835::t_762d561cdf6899 119
+  s_ff851786d26835::t_e2624379abbfab 108-114
+  s_ff851786d26835::t_52ba1242eb8082 147
+  s_ff851786d26835::t_920cbd8ac22b16 178
+  s_ff851786d26835::t_f70ab07583eeaa 72
+  s_ff851786d26835::t_5bf18298217146 7-12
+  s_ff851786d26835::t_6365b288aa367c 99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "a26294952aecd37de58e8b3b8d9602a95b4e15a7",
+  "prompts": {},
+  "sessions": {
+    "s_ff851786d26835": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38afc7df-a7d1-4085-b81e-b7f2629a7ad1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
