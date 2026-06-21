@@ -89,3 +89,53 @@ test('postReview posts one inline review for a commented PR', async () => {
   assert.strictEqual(calls[0][1].comments.length, 1);
   assert.strictEqual(calls[0][1].comments[0].line, 4);
 });
+
+const { MARKER } = require('../minimize-review.js');
+
+function fullFakeGithub(calls) {
+  return {
+    rest: {
+      issues: {
+        createComment: async (a) => { calls.push(['issue', a]); },
+        listComments: async () => ({ data: [] }),
+      },
+      pulls: {
+        createReview: async (a) => { calls.push(['review', a]); },
+        listReviews: async () => ({ data: [] }),
+        listReviewComments: async () => ({ data: [] }),
+      },
+    },
+    graphql: async () => ({}),
+  };
+}
+
+test('postReview appends the marker to a clean-PR comment', async () => {
+  process.env.OCR_RESULT_PATH = '/tmp/ocr-empty-marker.json';
+  require('node:fs').writeFileSync('/tmp/ocr-empty-marker.json', JSON.stringify({ comments: [] }));
+  const calls = [];
+  const github = fullFakeGithub(calls);
+  const context = {
+    repo: { owner: 'o', repo: 'r' }, issue: { number: 5 },
+    eventName: 'pull_request', payload: { pull_request: {} },
+  };
+  await postReview({ github, context, core: { info() {}, warning() {} } });
+  assert.strictEqual(calls[0][0], 'issue');
+  assert.ok(calls[0][1].body.includes(MARKER));
+});
+
+test('postReview appends the marker to inline review comment bodies', async () => {
+  process.env.OCR_RESULT_PATH = '/tmp/ocr-one-marker.json';
+  require('node:fs').writeFileSync('/tmp/ocr-one-marker.json', JSON.stringify({
+    comments: [{ path: 'a.js', content: 'bug', start_line: 0, end_line: 4 }],
+  }));
+  const calls = [];
+  const github = fullFakeGithub(calls);
+  const context = {
+    repo: { owner: 'o', repo: 'r' }, issue: { number: 5 }, eventName: 'pull_request',
+    payload: { pull_request: { head: { sha: 'deadbeef' } } },
+  };
+  await postReview({ github, context, core: { info() {}, warning() {} } });
+  assert.strictEqual(calls[0][0], 'review');
+  assert.ok(calls[0][1].body.includes(MARKER));
+  assert.ok(calls[0][1].comments[0].body.includes(MARKER));
+});

@@ -4,6 +4,12 @@
 //   examples/github_actions/ocr-review.yml  — see NOTICE.
 
 const fs = require('node:fs');
+const minimizePriorReview = require('./minimize-review.js');
+const { MARKER } = minimizePriorReview;
+
+function withMarker(body) {
+  return `${String(body || '')}\n\n${MARKER}`;
+}
 
 function resultPath() { return process.env.OCR_RESULT_PATH || '/tmp/ocr-result.json'; }
 function stderrPath() { return process.env.OCR_STDERR_PATH || '/tmp/ocr-stderr.log'; }
@@ -63,7 +69,7 @@ function formatSummaryComments(summaryComments) {
 }
 
 function buildReviewComment(comment) {
-  const rc = { path: comment.path, body: formatComment(comment) };
+  const rc = { path: comment.path, body: withMarker(formatComment(comment)) };
   if (comment.start_line >= 1 && comment.end_line >= 1 && comment.start_line !== comment.end_line) {
     rc.start_line = comment.start_line;
     rc.line = comment.end_line;
@@ -90,7 +96,7 @@ async function postReview({ github, context, core }) {
     if (stderr) {
       await github.rest.issues.createComment({
         owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
-        body: `⚠️ **OpenCodeReview** encountered an error:\n${fencedBlock(stderr)}`,
+        body: withMarker(`⚠️ **OpenCodeReview** encountered an error:\n${fencedBlock(stderr)}`),
       });
     }
     return;
@@ -99,11 +105,18 @@ async function postReview({ github, context, core }) {
   const comments = result.comments || [];
   const warnings = result.warnings || [];
 
+  // Collapse any prior open-code-review output so only this run stays expanded.
+  try {
+    await minimizePriorReview({ github, context, core });
+  } catch (e) {
+    core.warning(`Minimize prior review failed: ${e.message}`);
+  }
+
   if (comments.length === 0) {
     const message = result.message || 'No comments generated. Looks good to me.';
     await github.rest.issues.createComment({
       owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
-      body: `✅ **OpenCodeReview**: ${message}`,
+      body: withMarker(`✅ **OpenCodeReview**: ${message}`),
     });
     return;
   }
@@ -131,6 +144,7 @@ async function postReview({ github, context, core }) {
   let summaryBody = buildSummaryBody(totalCount, reviewComments.length, commentsWithoutLine.length, warnings);
   summaryBody += formatSummaryComments(commentsWithoutLine);
 
+  summaryBody = withMarker(summaryBody);
   try {
     await github.rest.pulls.createReview({
       owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber,
@@ -161,6 +175,7 @@ async function postReview({ github, context, core }) {
       finalBody += '\n\n---\n\n### ⚠️ Inline comments shown in summary';
       for (const { comment, error } of failedComments) finalBody += '\n\n---\n\n' + formatCommentMarkdown(comment, error);
     }
+    finalBody = withMarker(finalBody);
     await github.rest.issues.createComment({
       owner: context.repo.owner, repo: context.repo.repo, issue_number: prNumber, body: finalBody,
     });
