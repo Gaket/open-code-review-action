@@ -1,0 +1,25 @@
+action.yml
+  s_ff851786d26835::t_c62d577f92d1b5 115
+  s_ff851786d26835::t_0eab0cae55732b 30-41
+  s_ff851786d26835::t_02eaded5f14da3 54-90,93
+  s_ff851786d26835::t_f5c9b718297116 110
+  s_ff851786d26835::t_bd3d513a9ec469 104
+  s_ff851786d26835::t_06030a9164c65c 137
+  s_ff851786d26835::t_21754f43a52057 154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "c4233202b8d820888416edc08bddaf06c020d0b0",
+  "prompts": {},
+  "sessions": {
+    "s_ff851786d26835": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38afc7df-a7d1-4085-b81e-b7f2629a7ad1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
