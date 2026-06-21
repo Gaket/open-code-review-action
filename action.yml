@@ -27,6 +27,18 @@ inputs:
     description: 'Optional review language passed to `ocr config set language` (e.g. English). Empty = OCR default.'
     required: false
     default: ''
+  skip_draft:
+    description: 'Skip auto-review while the PR is a draft. /review still works; ready_for_review resumes.'
+    required: false
+    default: 'true'
+  skip_labels:
+    description: 'Comma-separated label names; skip auto-review if the PR has any (case-insensitive). e.g. no-ai-review,wip'
+    required: false
+    default: ''
+  skip_title_keywords:
+    description: 'Comma-separated markers; skip auto-review if the PR title contains any (case-insensitive). e.g. [skip review],WIP'
+    required: false
+    default: ''
   github_token:
     description: 'Token with pull-requests: write to post review comments'
     required: false
@@ -39,9 +51,46 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Decide whether to skip review
+      id: gate
+      uses: actions/github-script@v7
+      env:
+        IN_SKIP_DRAFT: ${{ inputs.skip_draft }}
+        IN_SKIP_LABELS: ${{ inputs.skip_labels }}
+        IN_SKIP_TITLE_KEYWORDS: ${{ inputs.skip_title_keywords }}
+        ACTION_PATH: ${{ github.action_path }}
+      with:
+        github-token: ${{ inputs.github_token }}
+        script: |
+          const decideSkip = require(`${process.env.ACTION_PATH}/skip-gate.js`);
+          const { skip, reason } = decideSkip({
+            context,
+            inputs: {
+              skipDraft: process.env.IN_SKIP_DRAFT,
+              skipLabels: process.env.IN_SKIP_LABELS,
+              skipTitleKeywords: process.env.IN_SKIP_TITLE_KEYWORDS,
+            },
+          });
+          core.setOutput('skip', String(skip));
+          core.setOutput('reason', reason || '');
+          if (skip) core.info(`open-code-review: skipping — ${reason}`);
+
+    - name: Minimize prior review (skipped)
+      if: steps.gate.outputs.skip == 'true'
+      uses: actions/github-script@v7
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        REASON: ${{ steps.gate.outputs.reason }}
+      with:
+        github-token: ${{ inputs.github_token }}
+        script: |
+          const minimizePriorReview = require(`${process.env.ACTION_PATH}/minimize-review.js`);
+          core.info(`open-code-review: skipped (${process.env.REASON}); minimizing any prior review.`);
+          await minimizePriorReview({ github, context, core });
+
     - name: Get PR context (comment triggers)
       id: pr-context
-      if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+      if: steps.gate.outputs.skip != 'true' && github.event_name == 'issue_comment' && github.event.issue.pull_request
       uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.github_token }}
@@ -52,15 +101,18 @@ runs:
           core.setOutput('head_sha', pr.head.sha);
 
     - name: Setup Node.js
+      if: steps.gate.outputs.skip != 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
 
     - name: Install open-code-review
+      if: steps.gate.outputs.skip != 'true'
       shell: bash
       run: npm install -g "@alibaba-group/open-code-review@${{ inputs.ocr_version }}"
 
     - name: Configure OCR for the LiteLLM endpoint
+      if: steps.gate.outputs.skip != 'true'
       shell: bash
       env:
         IN_URL: ${{ inputs.llm_url }}
@@ -82,6 +134,7 @@ runs:
         fi
 
     - name: Run open-code-review
+      if: steps.gate.outputs.skip != 'true'
       shell: bash
       env:
         BASE_REF: ${{ github.event.pull_request.base.ref || steps.pr-context.outputs.base_ref }}
@@ -98,6 +151,7 @@ runs:
         echo "----- ocr-stderr.log -----";  cat /tmp/ocr-stderr.log || true
 
     - name: Post review to PR
+      if: steps.gate.outputs.skip != 'true'
       uses: actions/github-script@v7
       env:
         OCR_RESULT_PATH: /tmp/ocr-result.json
