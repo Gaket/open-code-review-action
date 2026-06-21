@@ -1,0 +1,22 @@
+test/minimize-review.test.js
+  s_ff851786d26835::t_84f4e608749e74 67-68,70,72
+minimize-review.js
+  s_ff851786d26835::t_bf095a27b2b28f 25,27
+  s_ff851786d26835::t_48e6f6a5737f69 42,47,52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "f414b46a0bc29ea2e1ba69eed7c4b064592137c6",
+  "prompts": {},
+  "sessions": {
+    "s_ff851786d26835": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38afc7df-a7d1-4085-b81e-b7f2629a7ad1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
