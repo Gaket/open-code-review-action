@@ -1,0 +1,23 @@
+examples/pr-review.yml
+  s_ff851786d26835::t_b90fc24cf6b4ea 48-51
+  s_ff851786d26835::t_0bd89f037c8f05 18
+README.md
+  s_ff851786d26835::t_3204936cb42636 68-70
+  s_ff851786d26835::t_5efaf96f848502 74-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "14d25a66e38222bb9a8956ab990df2e9b1e09f34",
+  "prompts": {},
+  "sessions": {
+    "s_ff851786d26835": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38afc7df-a7d1-4085-b81e-b7f2629a7ad1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
