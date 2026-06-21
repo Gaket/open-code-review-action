@@ -64,7 +64,10 @@ test('tolerates a graphql failure and continues', async () => {
 });
 
 test('returns 0 gracefully when list endpoints are missing', async () => {
+  const warnings = [];
+  const spyCore = { info() {}, warning: (m) => warnings.push(m) };
   const github = { rest: { issues: {}, pulls: {} }, graphql: async () => ({}) };
-  const n = await minimizePriorReview({ github, context: ctx, core });
+  const n = await minimizePriorReview({ github, context: ctx, core: spyCore });
   assert.strictEqual(n, 0);
+  assert.strictEqual(warnings.length, 3);
 });

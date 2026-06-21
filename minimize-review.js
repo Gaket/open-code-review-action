@@ -22,9 +22,9 @@ function isOurs(node) {
   return body.includes(MARKER) && login.endsWith('[bot]');
 }
 
-async function collect(listFn, params, core, label) {
+async function collect(listFn, core, label) {
   try {
-    const { data } = await listFn(params);
+    const { data } = await listFn();
     return (data || []).filter(isOurs).map((n) => n.node_id);
   } catch (e) {
     core.warning(`open-code-review: ${label} lookup failed: ${e.message}`);
@@ -39,20 +39,17 @@ async function minimizePriorReview({ github, context, core }) {
 
   const ids = [
     ...(await collect(
-      github.rest.issues.listComments,
-      { owner, repo, issue_number: number, per_page: 100 },
+      () => github.rest.issues.listComments({ owner, repo, issue_number: number, per_page: 100 }),
       core,
       'issue comments',
     )),
     ...(await collect(
-      github.rest.pulls.listReviews,
-      { owner, repo, pull_number: number, per_page: 100 },
+      () => github.rest.pulls.listReviews({ owner, repo, pull_number: number, per_page: 100 }),
       core,
       'reviews',
     )),
     ...(await collect(
-      github.rest.pulls.listReviewComments,
-      { owner, repo, pull_number: number, per_page: 100 },
+      () => github.rest.pulls.listReviewComments({ owner, repo, pull_number: number, per_page: 100 }),
       core,
       'review comments',
     )),
