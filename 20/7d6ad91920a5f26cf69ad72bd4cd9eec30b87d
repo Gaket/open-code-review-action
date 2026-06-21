@@ -1,0 +1,21 @@
+test/skip-gate.test.js
+  s_ff851786d26835::t_ff1e181276003e 1-76
+skip-gate.js
+  s_ff851786d26835::t_c02e8d4d7a75a1 1-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "207d6ad91920a5f26cf69ad72bd4cd9eec30b87d",
+  "prompts": {},
+  "sessions": {
+    "s_ff851786d26835": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38afc7df-a7d1-4085-b81e-b7f2629a7ad1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Artur Kuzmin <artursregs@gmail.com>"
+    }
+  }
+}
