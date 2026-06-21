@@ -65,8 +65,29 @@ A ready-to-copy version lives in [`examples/pr-review.yml`](examples/pr-review.y
 | `use_anthropic` | no | `false` | `true` **only** for an Anthropic-protocol endpoint. Keep `false` for OpenAI-compatible LiteLLM |
 | `extra_body` | no | `''` | Optional JSON merged into the request body, e.g. `{"enable_thinking": false}` |
 | `language` | no | `''` | Optional review language (`ocr config set language`), e.g. `English`. Empty = OCR default |
+| `skip_draft` | no | `true` | Skip auto-review while the PR is a draft. `/review` still works; add `ready_for_review` to the workflow's PR `types` so it auto-reviews when marked ready |
+| `skip_labels` | no | `''` | Comma-separated label names; skip if the PR has any (case-insensitive). e.g. `no-ai-review,wip` |
+| `skip_title_keywords` | no | `''` | Comma-separated markers; skip if the PR title contains any (case-insensitive). e.g. `[skip review],WIP` |
 | `github_token` | no | `${{ github.token }}` | Token with `pull-requests: write` to post comments |
 | `ocr_version` | no | `1.3.19` | npm version of `@alibaba-group/open-code-review` (pinned by default) |
+
+## Skipping PRs & minimizing superseded reviews
+
+Auto-review is skipped (the job spends no LLM budget) when, on a `pull_request` /
+`pull_request_target` event, the PR is a **draft** (`skip_draft`, default `true`),
+carries a **skip label** (`skip_labels`), or its **title** contains a skip keyword
+(`skip_title_keywords`). Commenting **`/review`** always overrides these and reviews
+the current changes.
+
+> **Breaking change vs earlier `@v1`:** `skip_draft` defaults to `true`, so draft PRs
+> are no longer auto-reviewed by default. Set `skip_draft: 'false'` to restore the old
+> behavior. To auto-review when a draft is marked ready, include `ready_for_review` in
+> the workflow's `pull_request*` `types`.
+
+Whenever a fresh review is posted (or a PR becomes skipped), the action **minimizes**
+its previous review — the summary, inline comments, and any status comments are
+collapsed as *outdated* via GitHub's minimize feature, rather than deleted, so history
+is preserved and only the latest review stays expanded.
 
 ## LiteLLM (OpenAI-compatible) setup
 

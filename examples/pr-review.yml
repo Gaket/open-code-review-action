@@ -15,7 +15,7 @@ concurrency:
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
   issue_comment:
     types: [created]
 
@@ -45,4 +45,8 @@ jobs:
           llm_token: ${{ secrets.OCR_LLM_TOKEN }}
           llm_model: ${{ secrets.OCR_LLM_MODEL || vars.OCR_LLM_MODEL }}  # e.g. kimi-code
           use_anthropic: 'false'
+          # Optional skip controls (defaults shown). /review always overrides.
+          # skip_draft: 'true'
+          # skip_labels: 'no-ai-review'
+          # skip_title_keywords: '[skip review]'
           github_token: ${{ secrets.GITHUB_TOKEN }}
