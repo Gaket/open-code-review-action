@@ -70,6 +70,7 @@ A ready-to-copy version lives in [`examples/pr-review.yml`](examples/pr-review.y
 | `skip_title_keywords` | no | `''` | Comma-separated markers; skip if the PR title contains any (case-insensitive). e.g. `[skip review],WIP` |
 | `github_token` | no | `${{ github.token }}` | Token with `pull-requests: write` to post comments |
 | `ocr_version` | no | `1.3.19` | npm version of `@alibaba-group/open-code-review` (pinned by default) |
+| `review_timeout` | no | `10` | Timeout in minutes for each concurrent OCR review task. Passed to `ocr review --timeout` |
 
 ## Skipping PRs & minimizing superseded reviews
 
